@@ -54,7 +54,6 @@ def startWork(user, project_name):
     #     addProject(user, project)
     # users[user][project]["start_time"] = my_start_time
     project = getUserProject(user, project_name)
-    print(project)
     if project is None:
         obj = {
             "user_id": str(user),
@@ -64,7 +63,6 @@ def startWork(user, project_name):
         }
         insertWork(obj)
     else:
-        print("update")
         updateWork(user, project_name, str(
             my_start_time), project["total_time"])
 

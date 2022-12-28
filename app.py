@@ -32,7 +32,6 @@ async def start(
     interaction: Interaction,
     project: str,
 ):
-    print(project)
     time = startWork(interaction.user, project)
     await interaction.response.send_message(f'start {project} {interaction.user.mention} \n 開始時刻 {formatDate(time)}')
 
