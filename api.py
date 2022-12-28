@@ -1,8 +1,9 @@
 import requests
 import os
 import json
-from common import elapsed_time_str
+from common import elapsed_time_str, formatDate
 from error import ApiError
+import datetime
 
 
 def getUsers():
@@ -42,6 +43,10 @@ def getUserProjects(user):
     projects = []
     for data in data["work"]:
         project = f'{data["project_name"]} : 合計作業時間 {elapsed_time_str(data["total_time"])}'
+        if not data["start_time"] is None:
+            start_time = datetime.datetime.strptime(
+                data["start_time"], '%Y-%m-%dT%H:%M:%S.%f')
+            project += f'  作業中（{formatDate(start_time)}から）'
         projects.append(project)
     str_project = '\n'.join(projects)
 
