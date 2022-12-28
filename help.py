@@ -13,6 +13,3 @@ def getHelpText():
         ' 返り値　：プロジェクト名n：合計作業時間\n'\
         ' 　　　　　プロジェクト名n+1：合計作業時間\n'
     return msg
-
-
-print(getHelpText())

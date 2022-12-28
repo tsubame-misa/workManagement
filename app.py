@@ -3,9 +3,10 @@ from discord import app_commands, Intents, Client, Interaction
 from dotenv import load_dotenv
 from discord.app_commands import CommandTree
 from discord.ui import Select, View
-from work import startWork, stopWork, formatDate, getUserProject
+from work import startWork, stopWork, formatDate
 from error import NoUserError, NoProjectError, NoStartError
 from help import getHelpText
+from api import getUserProjects
 load_dotenv()
 
 
@@ -31,6 +32,7 @@ async def start(
     interaction: Interaction,
     project: str,
 ):
+    print(project)
     time = startWork(interaction.user, project)
     await interaction.response.send_message(f'start {project} {interaction.user.mention} \n 開始時刻 {formatDate(time)}')
 
@@ -39,6 +41,7 @@ async def start(
 @app_commands.describe(project="what project?")
 async def stop(interaction: Interaction, project: str,):
     log = None
+
     try:
         log = stopWork(interaction.user, project)
     except NoStartError:
@@ -49,13 +52,11 @@ async def stop(interaction: Interaction, project: str,):
 
 @client.tree.command()
 async def projects(interaction: Interaction):
-    project = None
-    try:
-        project = getUserProject(interaction.user)
-    except NoUserError:
+    projects = getUserProjects(interaction.user)
+    if len(projects) == 0:
         await interaction.response.send_message(f'projects {interaction.user.mention} \n プロジェクトは作成されていません')
         return
-    await interaction.response.send_message(f'project {interaction.user.mention} \n {project}')
+    await interaction.response.send_message(f'project {interaction.user.mention} \n {projects}')
 
 
 @client.tree.command()

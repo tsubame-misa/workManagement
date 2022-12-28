@@ -1,7 +1,7 @@
 import requests
 import os
 import json
-from work import elapsed_time_str
+from common import elapsed_time_str
 from error import ApiError
 
 
@@ -31,19 +31,21 @@ def getUserProjects(user):
         "Content-Type": "application/json",
         "x-hasura-admin-secret": os.getenv('HASURA_ADMIN_SECRET'),
     }
-    data = json.dumps({"id": user})
+    data = json.dumps({"id": str(user)})
     res = requests.post(url, headers=headers, data=data)
     data = res.json()
 
     if "error" in data:
+        print(data)
         raise ApiError
 
     projects = []
     for data in data["work"]:
         project = f'{data["project_name"]} : 合計作業時間 {elapsed_time_str(data["total_time"])}'
         projects.append(project)
+    str_project = '\n'.join(projects)
 
-    return projects
+    return str_project
 
 
 def getUserProject(user, project):
@@ -52,7 +54,7 @@ def getUserProject(user, project):
         "Content-Type": "application/json",
         "x-hasura-admin-secret": os.getenv('HASURA_ADMIN_SECRET'),
     }
-    data = json.dumps({"user_id": user, "project_name": project})
+    data = json.dumps({"user_id": str(user), "project_name": project})
     res = requests.post(url, headers=headers, data=data)
     data = res.json()
 
@@ -60,6 +62,7 @@ def getUserProject(user, project):
         raise ApiError
 
     if len(data["work"]) == 0:
+        print(data)
         return None
 
     return({"start_time": data["work"][0]["start_time"],
@@ -76,18 +79,20 @@ def insertWork(data):
     res = requests.post(url, headers=headers, data=data)
     data = res.json()
     if "error" in data:
+        print(data)
         raise ApiError
 
 
-def updateWork(user_id, project_name, start_time, total_time):
+def updateWork(user, project_name, start_time, total_time):
     url = "https://tsubame.hasura.app/api/rest/update/project"
     headers = {
         "Content-Type": "application/json",
         "x-hasura-admin-secret": os.getenv('HASURA_ADMIN_SECRET'),
     }
-    data = json.dumps({"user_id": user_id, "project_name": project_name,
+    data = json.dumps({"user_id": str(user), "project_name": project_name,
                       "start_time": start_time, "total_time": total_time})
     res = requests.put(url, headers=headers, data=data)
     data = res.json()
     if "error" in data:
+        print(data)
         raise ApiError
