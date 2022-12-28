@@ -5,6 +5,7 @@ from discord.app_commands import CommandTree
 from discord.ui import Select, View
 from work import startWork, stopWork, formatDate, getUserProject
 from error import NoUserError, NoProjectError, NoStartError
+from help import getHelpText
 load_dotenv()
 
 
@@ -31,7 +32,7 @@ async def start(
     project: str,
 ):
     time = startWork(interaction.user, project)
-    await interaction.response.send_message(f'start {project} {interaction.user.mention} \n {formatDate(time)}')
+    await interaction.response.send_message(f'start {project} {interaction.user.mention} \n 開始時刻 {formatDate(time)}')
 
 
 @client.tree.command()
@@ -43,7 +44,7 @@ async def stop(interaction: Interaction, project: str,):
     except NoStartError:
         await interaction.response.send_message(f'stop {project} {interaction.user.mention} \n 作業が開始されていません')
         return
-    await interaction.response.send_message(f'stop {project} {interaction.user.mention} \n 終了時刻：{formatDate(log["end_time"])}, 今回の作業時間：{log["work_time"]}, 合計作業時間：{log["total_time"]}')
+    await interaction.response.send_message(f'stop {project} {interaction.user.mention} \n 終了時刻 {formatDate(log["end_time"])}, 今回の作業時間 {log["work_time"]}, 合計作業時間 {log["total_time"]}')
 
 
 @client.tree.command()
@@ -55,5 +56,12 @@ async def projects(interaction: Interaction):
         await interaction.response.send_message(f'projects {interaction.user.mention} \n プロジェクトは作成されていません')
         return
     await interaction.response.send_message(f'project {interaction.user.mention} \n {project}')
+
+
+@client.tree.command()
+async def help(interaction: Interaction):
+    msg = getHelpText()
+    await interaction.response.send_message(f'help {interaction.user.mention} \n {msg}')
+
 
 client.run(os.getenv("TOKEN"))

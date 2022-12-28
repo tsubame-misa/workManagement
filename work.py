@@ -91,7 +91,7 @@ def getUserProject(user):
         raise NoUserError
     projects = []
     for key in users[user]:
-        project = f'{key} : 合計時間 {elapsed_time_str(users[user][key]["total_time"].total_seconds())}'
+        project = f'{key} : 合計作業時間 {elapsed_time_str(users[user][key]["total_time"].total_seconds())}'
         projects.append(project)
     str_project = '\n'.join(projects)
 
