@@ -98,10 +98,10 @@ def getUserProject(user):
     return str_project
 
 
-startWork("hoge", "patakara")
+# startWork("hoge", "patakara")
 # time.sleep(3)
 # print(stopWork("hoge", "patakara"))
-startWork("hoge", "sum")
+# startWork("hoge", "sum")
 # time.sleep(3)
 # print(stopWork("hoge", "patakara"))
-print(getUserProject("hoge"))
+# print(getUserProject("hoge"))
