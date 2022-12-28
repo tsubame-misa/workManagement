@@ -8,3 +8,7 @@ class NoProjectError(Exception):
 
 class NoStartError(Exception):
     pass
+
+
+class ApiError(Exception):
+    pass

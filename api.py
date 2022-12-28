@@ -2,10 +2,11 @@ import requests
 import os
 import json
 from work import elapsed_time_str
+from error import ApiError
 
 
 def getUsers():
-    url = 'https://tsubame.hasura.app/api/rest/work_management/users'
+    url = 'https://tsubame.hasura.app/api/rest/work_management/user'
     headers = {
         "Content-Type": "application/json",
         "x-hasura-admin-secret": os.getenv('HASURA_ADMIN_SECRET'),
@@ -13,6 +14,9 @@ def getUsers():
 
     res = requests.get(url, headers=headers)
     data = res.json()
+
+    if "error" in data:
+        raise ApiError
 
     users = []
     for data in data["work"]:
@@ -30,6 +34,9 @@ def getUserProjects(user):
     data = json.dumps({"id": user})
     res = requests.post(url, headers=headers, data=data)
     data = res.json()
+
+    if "error" in data:
+        raise ApiError
 
     projects = []
     for data in data["work"]:
@@ -49,6 +56,9 @@ def getUserProject(user, project):
     res = requests.post(url, headers=headers, data=data)
     data = res.json()
 
+    if "error" in data:
+        raise ApiError
+
     if len(data["work"]) == 0:
         return None
 
@@ -64,6 +74,9 @@ def insertWork(data):
     }
     data = json.dumps({"object": data})
     res = requests.post(url, headers=headers, data=data)
+    data = res.json()
+    if "error" in data:
+        raise ApiError
 
 
 def updateWork(user_id, project_name, start_time, total_time):
@@ -76,3 +89,5 @@ def updateWork(user_id, project_name, start_time, total_time):
                       "start_time": start_time, "total_time": total_time})
     res = requests.put(url, headers=headers, data=data)
     data = res.json()
+    if "error" in data:
+        raise ApiError
