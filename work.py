@@ -1,7 +1,22 @@
 import datetime
+import time
+from error import NoProjectError, NoUserError, NoStartError
 
-start_time = None
-total_time = datetime.timedelta(seconds=0)
+"""
+データ形式
+TODO:データベース化
+users = [user:{
+    project1: {
+        start_time,
+        total_time,
+    }
+    project2: {
+        start_time,
+        total_time,
+    }
+}, ]
+"""
+users = {}
 
 
 def getDate():
@@ -34,19 +49,59 @@ def elapsed_time_str(seconds):
     return f"{h:02}:{m:02}:{s:02}"  # hh:mm:ss形式の文字列で返す
 
 
-def startWork(user):
-    global start_time
-    start_time = getDate()
-    return start_time
+def initUser(user):
+    global users
+    users[user] = {}
 
 
-def stopWork(user):
-    global start_time, total_time
-    if start_time is None:
-        return None
+def addProject(user, project):
+    global users
+    init_time = {
+        "start_time": None,
+        "total_time": datetime.timedelta(seconds=0)
+    }
+    users[user][project] = init_time
+
+
+def startWork(user, project):
+    global users
+    my_start_time = getDate()
+    if not user in users:
+        initUser(user)
+    if not project in users[user]:
+        addProject(user, project)
+    users[user][project]["start_time"] = my_start_time
+    return my_start_time
+
+
+def stopWork(user, project):
+    global users
+    # NOTE:分ける必要なかった
+    if not user in users or not project in users[user] or users[user][project]["start_time"] is None:
+        raise NoStartError
     end_time = getDate()
-    work_time = end_time-start_time
-    total_time += work_time
-    start_time = None
-    print(total_time)
-    return {"end_time": end_time, "work_time":  elapsed_time_str(work_time.total_seconds()), "total_time": elapsed_time_str(total_time.total_seconds())}
+    work_time = end_time-users[user][project]["start_time"]
+    users[user][project]["total_time"] += work_time
+    users[user][project]["start_time"] = None
+    return {"end_time": end_time, "work_time":  elapsed_time_str(work_time.total_seconds()), "total_time": elapsed_time_str(users[user][project]["total_time"].total_seconds())}
+
+
+def getUserProject(user):
+    if not user in users:
+        raise NoUserError
+    projects = []
+    for key in users[user]:
+        project = f'{key} : 合計時間 {elapsed_time_str(users[user][key]["total_time"].total_seconds())}'
+        projects.append(project)
+    str_project = '\n'.join(projects)
+
+    return str_project
+
+
+startWork("hoge", "patakara")
+# time.sleep(3)
+# print(stopWork("hoge", "patakara"))
+startWork("hoge", "sum")
+# time.sleep(3)
+# print(stopWork("hoge", "patakara"))
+print(getUserProject("hoge"))

@@ -1,8 +1,10 @@
 import os
-from discord import Intents, Client, Interaction
+from discord import app_commands, Intents, Client, Interaction
 from dotenv import load_dotenv
 from discord.app_commands import CommandTree
-from work import startWork, stopWork, formatDate
+from discord.ui import Select, View
+from work import startWork, stopWork, formatDate, getUserProject
+from error import NoUserError, NoProjectError, NoStartError
 load_dotenv()
 
 
@@ -23,18 +25,35 @@ client = MyClient(intents=intents)
 
 
 @client.tree.command()
-async def start(interaction: Interaction):
-    time = startWork(interaction.user)
-    await interaction.response.send_message(f'start, {interaction.user.mention},{formatDate(time)}')
+@app_commands.describe(project="what project?")
+async def start(
+    interaction: Interaction,
+    project: str,
+):
+    time = startWork(interaction.user, project)
+    await interaction.response.send_message(f'start {project} {interaction.user.mention} \n {formatDate(time)}')
 
 
 @client.tree.command()
-async def stop(interaction: Interaction):
-    log = stopWork(interaction.user)
-    if log is None:
-        await interaction.response.send_message(f'stop, {interaction.user.mention},作業が開始されていません')
+@app_commands.describe(project="what project?")
+async def stop(interaction: Interaction, project: str,):
+    log = None
+    try:
+        log = stopWork(interaction.user, project)
+    except NoStartError:
+        await interaction.response.send_message(f'stop {project} {interaction.user.mention} \n 作業が開始されていません')
         return
-    await interaction.response.send_message(f'stop, {interaction.user.mention},終了時刻：{formatDate(log["end_time"])},今回の作業時間：{log["work_time"]}, 合計作業時間：{log["total_time"]}')
+    await interaction.response.send_message(f'stop {project} {interaction.user.mention} \n 終了時刻：{formatDate(log["end_time"])}, 今回の作業時間：{log["work_time"]}, 合計作業時間：{log["total_time"]}')
 
+
+@client.tree.command()
+async def projects(interaction: Interaction):
+    project = None
+    try:
+        project = getUserProject(interaction.user)
+    except NoUserError:
+        await interaction.response.send_message(f'projects {interaction.user.mention} \n プロジェクトは作成されていません')
+        return
+    await interaction.response.send_message(f'project {interaction.user.mention} \n {project}')
 
 client.run(os.getenv("TOKEN"))
