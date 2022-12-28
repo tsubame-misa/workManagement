@@ -5,3 +5,7 @@ class NoStartError(Exception):
 
 class ApiError(Exception):
     pass
+
+
+class WorkingError(Exception):
+    pass
