@@ -87,7 +87,7 @@ def getUserProjectsText(user):
     for project in user_projects:
         text = f'{project["name"]}: 合計作業時間 {elapsed_time_str(project["total_seconds"])}'
         if project["working"]:
-            text += f'作業中'
+            text += f' 作業中'
         projects.append(text)
 
     projects_text = '\n'.join(projects)

@@ -3,7 +3,7 @@ from discord import app_commands, Intents, Client, Interaction, File
 from dotenv import load_dotenv
 from discord.app_commands import CommandTree
 from discord.ui import Select, View
-from work import startWork, stopWork
+from work import startWork, stopWork, getUserProjectsText
 from error import NoStartError, WorkingError, ApiError, NoFinishedError
 from help import getHelpText
 from api import getUserProjects
@@ -75,7 +75,7 @@ async def projects(interaction: Interaction):
     projects = None
 
     try:
-        projects = getUserProjects(interaction.user)
+        projects = getUserProjectsText(interaction.user)
     except ApiError:
         await interaction.response.send_message(f'projects  \n 保存処理の最中にエラーが発生しました')
         return
