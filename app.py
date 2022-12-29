@@ -1,5 +1,5 @@
 import os
-from discord import app_commands, Intents, Client, Interaction
+from discord import app_commands, Intents, Client, Interaction, File
 from dotenv import load_dotenv
 from discord.app_commands import CommandTree
 from discord.ui import Select, View
@@ -84,6 +84,12 @@ async def projects(interaction: Interaction):
 async def help(interaction: Interaction):
     msg = getHelpText()
     await interaction.response.send_message(f'help {interaction.user.mention} \n {msg}')
+
+
+@client.tree.command()
+async def download_file(interaction: Interaction):
+    filepath = "./work_file/sample.txt"
+    await interaction.response.send_message(file=File(filepath))
 
 
 client.run(os.getenv("TOKEN"))
