@@ -137,18 +137,19 @@ def getUserProjects(user):
         print(data)
         raise ApiError
 
-    projects = []
-    for data in data["projects"]:
-        # project = f'{data["project_name"]} : 合計作業時間 {elapsed_time_str(data["total_time"])}'
-        project = f'{data["name"]}'
-        # if not data["start_time"] is None:
-        #     start_time = datetime.datetime.strptime(
-        #         data["start_time"], '%Y-%m-%dT%H:%M:%S')
-        #     project += f'  作業中（{formatDate(start_time)}から）'
-        projects.append(project)
-    str_project = '\n'.join(projects)
+    # projects = []
+    # for data in data["projects"]:
+    #     # project = f'{data["project_name"]} : 合計作業時間 {elapsed_time_str(data["total_time"])}'
+    #     project = f'{data["name"]}'
+    #     # if not data["start_time"] is None:
+    #     #     start_time = datetime.datetime.strptime(
+    #     #         data["start_time"], '%Y-%m-%dT%H:%M:%S')
+    #     #     project += f'  作業中（{formatDate(start_time)}から）'
+    #     projects.append(project)
+    # str_project = '\n'.join(projects)
 
-    return str_project
+    # return str_project
+    return data["projects"]
 
 
 def getUserWorkingProject(project_id):
@@ -168,25 +169,22 @@ def getUserWorkingProject(project_id):
         print(data)
         return None
 
-    return({"start_time": data["works"][0]["start_time"],
-            "end_time": data["works"][0]["end_time"]})
+    return data["works"]
 
 
-def insertProject(user, project_name):
+def insertProject(data):
     url = "https://tsubame.hasura.app/api/rest/work_management/insert/project"
     headers = {
         "Content-Type": "application/json",
         "x-hasura-admin-secret": os.getenv('HASURA_ADMIN_SECRET'),
     }
-    # TODO: make
-    data = {"user_id": user, "name": project_name}
     data = json.dumps({"object": data})
     res = requests.post(url, headers=headers, data=data)
     data = res.json()
     if "error" in data:
         print(data)
         raise ApiError
-    return data["insert_projects_one"]["id"]
+    return data["insert_projects_one"]
 
 
 def updateProject(id, total_seconds, working):
@@ -197,12 +195,13 @@ def updateProject(id, total_seconds, working):
     }
     data = json.dumps(
         {"id": id, "total_seconds": total_seconds, "working": working})
-    res = requests.post(url, headers=headers, data=data)
+    res = requests.put(url, headers=headers, data=data)
     data = res.json()
     if "error" in data:
         print(data)
         raise ApiError
-    return data["insert_projects_one"]["id"]
+    print(data)
+    return data["update_projects_by_pk"]
 
 
 def insertWork(data):
@@ -211,24 +210,22 @@ def insertWork(data):
         "Content-Type": "application/json",
         "x-hasura-admin-secret": os.getenv('HASURA_ADMIN_SECRET'),
     }
-    # TODO: make
-    data = {"project_id": 1, "start_time": "2022-12-29 22:20:11"}
     data = json.dumps({"object": data})
     res = requests.post(url, headers=headers, data=data)
     data = res.json()
     if "error" in data:
         print(data)
         raise ApiError
-    return data["insert_works_one"]["id"]
+    return data["insert_works_one"]
 
 
-def updateWork(work_id):
+def updateWork(work_id, end_time):
     url = "https://tsubame.hasura.app/api/rest/update/project"
     headers = {
         "Content-Type": "application/json",
         "x-hasura-admin-secret": os.getenv('HASURA_ADMIN_SECRET'),
     }
-    data = json.dumps({"id": 4, "end_time": "2022-12-29 22:26:27"})
+    data = json.dumps({"id": work_id, "end_time": end_time})
     res = requests.put(url, headers=headers, data=data)
     data = res.json()
     if "error" in data:

@@ -29,6 +29,3 @@ def getDate():
 
 def formatDate(date):
     return date.strftime('%Y/%m/%d %H:%M:%S')
-
-
-print(getDate())
