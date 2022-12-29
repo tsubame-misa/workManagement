@@ -102,3 +102,20 @@ def updateWork(work_id, end_time):
         print(data)
         raise ApiError
     return data["update_works_by_pk"]
+
+
+def getUserProjectWorks(project_id):
+    url = "https://tsubame.hasura.app/api/rest/work_management/users/projects/work"
+    headers = {
+        "Content-Type": "application/json",
+        "x-hasura-admin-secret": os.getenv('HASURA_ADMIN_SECRET'),
+    }
+    data = json.dumps({"project_id": project_id})
+    res = requests.post(url, headers=headers, data=data)
+    data = res.json()
+
+    if "error" in data:
+        print(data)
+        raise ApiError
+
+    return data["works"]
