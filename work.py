@@ -2,15 +2,13 @@ import datetime
 from error import NoStartError, WorkingError
 from common import elapsed_time_str, getDate
 from api import getUserProject, updateWork, insertWork
+import time
 
 
 def startWork(user, project_name):
     my_start_time = getDate()
 
     project = getUserProject(user, project_name)
-    if not project["start_time"] is None:
-        raise WorkingError
-
     if project is None:
         obj = {
             "user_id": str(user),
@@ -19,6 +17,8 @@ def startWork(user, project_name):
             "total_time": 0,
         }
         insertWork(obj)
+    elif not project["start_time"] is None:
+        raise WorkingError
     else:
         updateWork(user, project_name, str(
             my_start_time), project["total_time"])
@@ -33,7 +33,7 @@ def stopWork(user, project_name):
 
     end_time = getDate()
     start_time = datetime.datetime.strptime(
-        project["start_time"], '%Y-%m-%dT%H:%M:%S.%f')
+        project["start_time"], '%Y-%m-%dT%H:%M:%S')
     work_time = end_time-start_time
     project["total_time"] += int(work_time.total_seconds())
     project["start_time"] = None

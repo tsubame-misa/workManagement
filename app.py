@@ -36,6 +36,7 @@ async def start(
     time = None
     try:
         time = startWork(interaction.user, project)
+        time = formatDate(time)
     except WorkingError:
         await interaction.response.send_message(f'start {project} \n このプロジェクトは作業中です')
         return
@@ -43,7 +44,7 @@ async def start(
         await interaction.response.send_message(f'start {project} \n 保存処理の最中にエラーが発生しました')
         return
 
-    await interaction.response.send_message(f'start {project} {interaction.user.mention} \n 開始時刻 {formatDate(time)}')
+    await interaction.response.send_message(f'start {project} {interaction.user.mention} \n 開始時刻 {time}')
 
 
 @client.tree.command()

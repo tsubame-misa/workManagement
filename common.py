@@ -23,7 +23,7 @@ def elapsed_time_str(seconds):
 
 
 def getDate():
-    date = datetime.datetime.now()
+    date = datetime.datetime.now().replace(microsecond=0)
     return date
 
 
