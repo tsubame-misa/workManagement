@@ -9,3 +9,7 @@ class ApiError(Exception):
 
 class WorkingError(Exception):
     pass
+
+
+class NoFinishedError(Exception):
+    pass
