@@ -1,11 +1,11 @@
 import os
-from discord import app_commands, Intents, Client, Interaction, File
+from discord import app_commands, Intents, Client, Interaction, File, Embed
 from dotenv import load_dotenv
 from discord.app_commands import CommandTree
 from discord.ui import Select, View
 from work import startWork, stopWork, getUserProjectsText
 from error import NoStartError, WorkingError, ApiError, NoFinishedError
-from help import getHelpText
+from help import getHelpText, getCommandDetail, select_command_data
 from api import getUserProjects
 from common import formatDate
 from log import makeLogFile, rmLogFile
@@ -30,7 +30,7 @@ client = MyClient(intents=intents)
 
 
 @client.tree.command()
-@app_commands.describe(project="プロジェクト名", description="作業内容")
+@app_commands.describe(project="プロジェクト名", description="作業内容(任意)")
 async def start(
     interaction: Interaction,
     project: str,
@@ -85,21 +85,39 @@ async def projects(interaction: Interaction):
     projects = None
 
     try:
+        await interaction.response.defer()
         projects = getUserProjectsText(interaction.user)
     except ApiError:
         await interaction.response.send_message(f'projects  \n 保存処理の最中にエラーが発生しました')
         return
 
     if len(projects) == 0:
-        await interaction.response.send_message(f'projects {interaction.user.mention} \n プロジェクトは作成されていません')
+        await interaction.followup.send(f'projects {interaction.user.mention} \n プロジェクトは作成されていません')
         return
-    await interaction.response.send_message(f'project {interaction.user.mention} \n {projects}')
+    await interaction.followup.send(f'project {interaction.user.mention} \n {projects}')
 
 
 @client.tree.command()
-async def help(interaction: Interaction):
-    msg = getHelpText()
-    await interaction.response.send_message(f'help {interaction.user.mention} \n {msg}')
+@app_commands.describe(command="コマンド名(任意)")
+async def help(interaction: Interaction, command: str = None):
+    if command is None:
+        embed = Embed(title="work management bot commands",
+                      description="`\help <command_name> で詳細を見ることができます。`", color=0x2daffa)
+        embed.add_field(name="`\start <project_name> <description>` ",
+                        value="作業の開始")
+        embed.add_field(name="`\stop <project_name>`", value="作業の終了\n")
+        embed.add_field(name="`\projects`", value="プロジェクト作業時間の一覧表示\n")
+        embed.add_field(name="`\download_file`",
+                        value="プロジェクトの詳細データ(json)のダウンロード")
+    else:
+        print(command)
+        embed = Embed(title="",
+                      description="", color=0x2daffa)
+        command_detail = getCommandDetail(command)
+        print("command_detail", command_detail)
+        embed.add_field(name=command_detail["name"],
+                        value=command_detail["value"])
+    await interaction.response.send_message(embed=embed)
 
 
 @client.tree.command()
@@ -108,14 +126,12 @@ async def download_file(interaction: Interaction):
     await interaction.response.send_message(file=File(filepath))
 
 
-@client.tree.command()
-async def defer(interaction: Interaction):
+# @client.tree.command()
+# async def defer(interaction: Interaction):
 
-    await interaction.response.defer()
-    await asyncio.sleep(3)
-    # await interaction.response.send_message("fin")
-    await interaction.followup.send("hoge")
-    # await interaction.response.send_message("fin", ephemeral=True)
+#     await interaction.response.defer()
+#     await asyncio.sleep(3)
+#     await interaction.followup.send("hoge")
 
 
 client.run(os.getenv("TOKEN"))
