@@ -30,16 +30,16 @@ client = MyClient(intents=intents)
 
 
 @client.tree.command()
-@app_commands.describe(project="what project?")
+@app_commands.describe(project="プロジェクト名", description="作業内容")
 async def start(
     interaction: Interaction,
     project: str,
-    describe: str = None,
+    description: str = None,
 ):
     time = None
     try:
         await interaction.response.defer()
-        time = startWork(interaction.user, project)
+        time = startWork(interaction.user, project, description)
         time = formatDate(time)
     except WorkingError:
         await interaction.followup.send(f'start {project} \n このプロジェクトは作業中です。')
@@ -51,11 +51,14 @@ async def start(
         await interaction.followup.send(f'start {project} \n このプロジェクトには終了されていない作業があります。管理者に問い合わせて下さい。')
         return
 
-    await interaction.followup.send(f'start {project} {interaction.user.mention} \n 開始時刻 {time}')
+    if description is None:
+        await interaction.followup.send(f'start {project} {interaction.user.mention} \n 開始時刻 {time}')
+    else:
+        await interaction.followup.send(f'start {project}:{description} {interaction.user.mention} \n 開始時刻 {time}')
 
 
 @client.tree.command()
-# @app_commands.describe(project="what project?")
+@app_commands.describe(project="プロジェクト名")
 async def stop(interaction: Interaction, project: str):
     log = None
     try:
@@ -71,7 +74,10 @@ async def stop(interaction: Interaction, project: str):
         await interaction.followup.send(f'stop {project} \n このプロジェクトには終了されていない作業があります。管理者に問い合わせて下さい。')
         return
 
-    await interaction.followup.send(f'stop {project} {interaction.user.mention} \n 終了時刻 {formatDate(log["end_time"])}, 今回の作業時間 {log["work_time"]}, 合計作業時間 {log["total_time"]}')
+    if log["description"] is None:
+        await interaction.followup.send(f'stop {project} {interaction.user.mention} \n 終了時刻 {formatDate(log["end_time"])}, 今回の作業時間 {log["work_time"]}, 合計作業時間 {log["total_time"]}')
+    else:
+        await interaction.followup.send(f'stop {project}:{log["description"]} {interaction.user.mention} \n 終了時刻 {formatDate(log["end_time"])}, 今回の作業時間 {log["work_time"]}, 合計作業時間 {log["total_time"]}')
 
 
 @client.tree.command()

@@ -29,7 +29,7 @@ def getUserProject(user, project_name):
     return project
 
 
-def startWork(user, project_name):
+def startWork(user, project_name, description):
     my_start_time = getDate()
 
     project = getUserProject(user, project_name)
@@ -50,7 +50,8 @@ def startWork(user, project_name):
     if not work is None and len(work) > 1:
         raise NoFinishedError
 
-    work_obg = {"project_id": project["id"], "start_time": str(my_start_time)}
+    work_obg = {"project_id": project["id"], "start_time": str(
+        my_start_time), "description": description}
     insertWork(work_obg)
 
     return my_start_time
@@ -78,7 +79,7 @@ def stopWork(user, project_name):
     updateProject(project["id"], project["total_seconds"], False)
     updateWork(work["id"], str(end_time))
 
-    return {"end_time": end_time, "work_time":  elapsed_time_str(work_time.total_seconds()), "total_time": elapsed_time_str(project["total_seconds"])}
+    return {"end_time": end_time, "work_time":  elapsed_time_str(work_time.total_seconds()), "total_time": elapsed_time_str(project["total_seconds"]), "description": work["description"]}
 
 
 def getUserProjectsText(user):

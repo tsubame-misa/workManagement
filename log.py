@@ -23,7 +23,8 @@ def makeLogFile(user):
             work_log = {
                 "start": work["start_time"],
                 "end": work["end_time"],
-                "time": time}
+                "time": time,
+                "description": work["description"]}
             works_log.append(work_log)
         log = {
             "project": project["name"],

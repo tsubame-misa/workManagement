@@ -37,7 +37,6 @@ def getUserWorkingProject(project_id):
         raise ApiError
 
     if len(data["works"]) == 0:
-        print(data)
         return None
 
     return data["works"]
