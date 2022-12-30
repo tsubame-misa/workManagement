@@ -95,8 +95,7 @@ async def help(interaction: Interaction):
 
 @client.tree.command()
 async def download_file(interaction: Interaction):
-    filepath = makeLogFile(Interaction.user)
+    filepath = makeLogFile(interaction.user)
     await interaction.response.send_message(file=File(filepath))
-
 
 client.run(os.getenv("TOKEN"))

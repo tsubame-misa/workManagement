@@ -2,6 +2,7 @@ from api import getUserProjects, getUserProjectWorks
 from common import elapsed_time_str
 import datetime
 import json
+import os
 
 
 def makeLogFile(user):
@@ -13,21 +14,30 @@ def makeLogFile(user):
         for work in project_works:
             start_time = datetime.datetime.strptime(
                 work["start_time"], '%Y-%m-%dT%H:%M:%S')
-            end_time = datetime.datetime.strptime(
-                work["end_time"], '%Y-%m-%dT%H:%M:%S')
+            end_time = None
+            time = None
+            if not end_time is None:
+                end_time = datetime.datetime.strptime(
+                    work["end_time"], '%Y-%m-%dT%H:%M:%S')
+                time = start_time-end_time
             work_log = {
-                "start": start_time,
-                "end": end_time,
-                "time": start_time-end_time}
+                "start": work["start_time"],
+                "end": work["end_time"],
+                "time": time}
             works_log.append(work_log)
         log = {
             "project": project["name"],
-            "total": elapsed_time_str(project["total"]),
+            "total": elapsed_time_str(project["total_seconds"]),
             "works": works_log
         }
         logs.append(log)
-    with open('./work_file/'+user+".json", 'w') as f:
+    print(logs)
+    filepath = './work_file/'+str(user)+".json"
+    with open(filepath, 'w') as f:
         json.dump(logs, f, ensure_ascii=False, indent=4)
 
+    return filepath
 
-makeLogFile("misato#1137")
+
+def rmLogFile(filepath):
+    os.remove(filepath)
