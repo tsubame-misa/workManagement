@@ -1,9 +1,7 @@
 import requests
 import os
 import json
-from common import elapsed_time_str, formatDate
 from error import ApiError
-import datetime
 
 
 def getUserProjects(user):

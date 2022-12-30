@@ -1,15 +1,14 @@
 import os
 from discord import app_commands, Intents, Client, Interaction, File, Embed
 from dotenv import load_dotenv
-from discord.app_commands import CommandTree
+from discord.app_commands import CommandTree, Choice
 from discord.ui import Select, View
 from work import startWork, stopWork, getUserProjectsText
 from error import NoStartError, WorkingError, ApiError, NoFinishedError
-from help import getHelpText, getCommandDetail, select_command_data
-from api import getUserProjects
+from help import getCommandDetail
 from common import formatDate
-from log import makeLogFile, rmLogFile
-import asyncio
+from log import makeLogFile
+import discord
 load_dotenv()
 
 
@@ -97,10 +96,17 @@ async def projects(interaction: Interaction):
     await interaction.followup.send(f'project {interaction.user.mention} \n {projects}')
 
 
-@client.tree.command()
-@app_commands.describe(command="コマンド名(任意)")
-async def help(interaction: Interaction, command: str = None):
-    if command is None:
+# TODO:選択肢でコマンド名を出したい
+@client.tree.command(name="help")
+@app_commands.describe(commands="コマンド名(任意)")
+@app_commands.choices(commands=[
+    Choice(name="start", value="start"),
+    Choice(name="stop", value="stop"),
+    Choice(name="projects", value="projects"),
+    Choice(name="download_file", value="download_file"),
+])
+async def help(interaction: Interaction, commands: Choice[str]):
+    if commands.name is None:
         embed = Embed(title="work management bot commands",
                       description="`\help <command_name> で詳細を見ることができます。`", color=0x2daffa)
         embed.add_field(name="`\start <project_name> <description>` ",
@@ -110,28 +116,25 @@ async def help(interaction: Interaction, command: str = None):
         embed.add_field(name="`\download_file`",
                         value="プロジェクトの詳細データ(json)のダウンロード")
     else:
-        print(command)
-        embed = Embed(title="",
-                      description="", color=0x2daffa)
-        command_detail = getCommandDetail(command)
-        print("command_detail", command_detail)
-        embed.add_field(name=command_detail["name"],
-                        value=command_detail["value"])
-    await interaction.response.send_message(embed=embed)
+        try:
+            command_detail = getCommandDetail(commands.value)
+            embed = Embed(title="",
+                          description="", color=0x2daffa)
+            embed.add_field(name=command_detail["name"],
+                            value=command_detail["value"])
+            await interaction.response.send_message(embed=embed)
+        except KeyError:
+            await interaction.response.send_message(f'コマンド {commands.name} はwork managemantに存在しません')
 
 
 @client.tree.command()
 async def download_file(interaction: Interaction):
-    filepath = makeLogFile(interaction.user)
-    await interaction.response.send_message(file=File(filepath))
+    try:
+        await interaction.response.defer()
+        filepath = makeLogFile(interaction.user)
+    except:
+        await interaction.followup.send("エラーが発生しました。管理者に問い合わせて下さい。")
 
-
-# @client.tree.command()
-# async def defer(interaction: Interaction):
-
-#     await interaction.response.defer()
-#     await asyncio.sleep(3)
-#     await interaction.followup.send("hoge")
-
+    await interaction.followup.send(file=File(filepath))
 
 client.run(os.getenv("TOKEN"))
