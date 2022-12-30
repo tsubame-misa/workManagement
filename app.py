@@ -104,16 +104,18 @@ async def projects(interaction: Interaction):
     Choice(name="projects", value="projects"),
     Choice(name="download_file", value="download_file"),
 ])
-async def help(interaction: Interaction, commands: Choice[str]):
-    if commands.name is None:
+async def help(interaction: Interaction, commands: Choice[str] = None):
+    print(commands)
+    if commands is None:
         embed = Embed(title="work management bot commands",
-                      description="`\help <command_name> で詳細を見ることができます。`", color=0x2daffa)
+                      description="`\help <command_name>` で詳細を見ることができます。", color=0x2daffa)
         embed.add_field(name="`\start <project_name> <description>` ",
                         value="作業の開始")
         embed.add_field(name="`\stop <project_name>`", value="作業の終了\n")
         embed.add_field(name="`\projects`", value="プロジェクト作業時間の一覧表示\n")
         embed.add_field(name="`\download_file`",
                         value="プロジェクトの詳細データ(json)のダウンロード")
+        await interaction.response.send_message(embed=embed)
     else:
         try:
             command_detail = getCommandDetail(commands.value)
