@@ -8,7 +8,8 @@ from error import NoStartError, WorkingError, ApiError, NoFinishedError
 from help import getHelpText
 from api import getUserProjects
 from common import formatDate
-from log import makeLogFile
+from log import makeLogFile, rmLogFile
+import asyncio
 load_dotenv()
 
 
@@ -33,42 +34,44 @@ client = MyClient(intents=intents)
 async def start(
     interaction: Interaction,
     project: str,
+    describe: str = None,
 ):
     time = None
     try:
+        await interaction.response.defer()
         time = startWork(interaction.user, project)
         time = formatDate(time)
     except WorkingError:
-        await interaction.response.send_message(f'start {project} \n このプロジェクトは作業中です。')
+        await interaction.followup.send(f'start {project} \n このプロジェクトは作業中です。')
         return
     except ApiError:
-        await interaction.response.send_message(f'start {project} \n 保存処理の最中にエラーが発生しました。管理者に問い合わせて下さい。')
+        await interaction.followup.send(f'start {project} \n 保存処理の最中にエラーが発生しました。管理者に問い合わせて下さい。')
         return
     except NoFinishedError:
-        await interaction.response.send_message(f'start {project} \n このプロジェクトには終了されていない作業があります。管理者に問い合わせて下さい。')
+        await interaction.followup.send(f'start {project} \n このプロジェクトには終了されていない作業があります。管理者に問い合わせて下さい。')
         return
 
-    await interaction.response.send_message(f'start {project} {interaction.user.mention} \n 開始時刻 {time}')
+    await interaction.followup.send(f'start {project} {interaction.user.mention} \n 開始時刻 {time}')
 
 
 @client.tree.command()
-@app_commands.describe(project="what project?")
-async def stop(interaction: Interaction, project: str,):
+# @app_commands.describe(project="what project?")
+async def stop(interaction: Interaction, project: str):
     log = None
-
     try:
+        await interaction.response.defer()
         log = stopWork(interaction.user, project)
     except NoStartError:
-        await interaction.response.send_message(f'stop {project} {interaction.user.mention} \n 作業が開始されていません。')
+        await interaction.followup.send(f'stop {project} {interaction.user.mention} \n 作業が開始されていません。')
         return
     except ApiError:
-        await interaction.response.send_message(f'stop {project} \n 保存処理の最中にエラーが発生しました。管理者に問い合わせて下さい。')
+        await interaction.followup.send(f'stop {project} \n 保存処理の最中にエラーが発生しました。管理者に問い合わせて下さい。')
         return
     except NoFinishedError:
-        await interaction.response.send_message(f'stop {project} \n このプロジェクトには終了されていない作業があります。管理者に問い合わせて下さい。')
+        await interaction.followup.send(f'stop {project} \n このプロジェクトには終了されていない作業があります。管理者に問い合わせて下さい。')
         return
 
-    await interaction.response.send_message(f'stop {project} {interaction.user.mention} \n 終了時刻 {formatDate(log["end_time"])}, 今回の作業時間 {log["work_time"]}, 合計作業時間 {log["total_time"]}')
+    await interaction.followup.send(f'stop {project} {interaction.user.mention} \n 終了時刻 {formatDate(log["end_time"])}, 今回の作業時間 {log["work_time"]}, 合計作業時間 {log["total_time"]}')
 
 
 @client.tree.command()
@@ -97,5 +100,16 @@ async def help(interaction: Interaction):
 async def download_file(interaction: Interaction):
     filepath = makeLogFile(interaction.user)
     await interaction.response.send_message(file=File(filepath))
+
+
+@client.tree.command()
+async def defer(interaction: Interaction):
+
+    await interaction.response.defer()
+    await asyncio.sleep(3)
+    # await interaction.response.send_message("fin")
+    await interaction.followup.send("hoge")
+    # await interaction.response.send_message("fin", ephemeral=True)
+
 
 client.run(os.getenv("TOKEN"))

@@ -99,7 +99,6 @@ def updateWork(work_id, end_time):
     res = requests.put(url, headers=headers, data=data)
     data = res.json()
     if "error" in data:
-        print(data)
         raise ApiError
     return data["update_works_by_pk"]
 
