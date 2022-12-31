@@ -95,7 +95,6 @@ async def projects(interaction: Interaction):
     await interaction.followup.send(f'project {interaction.user.mention} \n{projects}')
 
 
-# TODO:選択肢でコマンド名を出したい
 @client.tree.command(name="help")
 @app_commands.describe(commands="コマンド名(任意)")
 @app_commands.choices(commands=[
@@ -105,15 +104,14 @@ async def projects(interaction: Interaction):
     Choice(name="download_file", value="download_file"),
 ])
 async def help(interaction: Interaction, commands: Choice[str] = None):
-    print(commands)
     if commands is None:
         embed = Embed(title="work management bot commands",
-                      description="`\help <command_name>` で詳細を見ることができます。", color=0x2daffa)
-        embed.add_field(name="`\start <project_name> <description>` ",
+                      description="`/help <command_name>` で詳細を見ることができます。", color=0x2daffa)
+        embed.add_field(name="`/start <project_name> <description>` ",
                         value="作業の開始")
-        embed.add_field(name="`\stop <project_name>`", value="作業の終了\n")
-        embed.add_field(name="`\projects`", value="プロジェクト作業時間の一覧表示\n")
-        embed.add_field(name="`\download_file`",
+        embed.add_field(name="`/stop <project_name>`", value="作業の終了\n")
+        embed.add_field(name="`/projects`", value="プロジェクト作業時間の一覧表示\n")
+        embed.add_field(name="`/download_file`",
                         value="プロジェクトの詳細データ(json)のダウンロード")
         await interaction.response.send_message(embed=embed)
     else:
