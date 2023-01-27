@@ -59,22 +59,21 @@ async def start(
 async def stop(interaction: Interaction, project: str):
     log = None
     try:
-        await interaction.response.defer()
         log = stopWork(interaction.user, project)
     except NoStartError:
-        await interaction.followup.send(f'stop {project} {interaction.user.mention} \n作業が開始されていません。')
+        await interaction.response.send_message(f'stop {project} {interaction.user.mention} \n作業が開始されていません。')
         return
     except ApiError:
-        await interaction.followup.send(f'stop {project} \n保存処理の最中にエラーが発生しました。管理者に問い合わせて下さい。')
+        await interaction.response.send_message(f'stop {project} \n保存処理の最中にエラーが発生しました。管理者に問い合わせて下さい。')
         return
     except NoFinishedError:
-        await interaction.followup.send(f'stop {project} \nこのプロジェクトには終了されていない作業があります。管理者に問い合わせて下さい。')
+        await interaction.response.send_message(f'stop {project} \nこのプロジェクトには終了されていない作業があります。管理者に問い合わせて下さい。')
         return
 
     if log["description"] is None:
-        await interaction.followup.send(f'stop {project} {interaction.user.mention} \n終了時刻 {formatDate(log["end_time"])}, 今回の作業時間 {log["work_time"]}, 合計作業時間 {log["total_time"]}')
+        await interaction.response.send_message(f'stop {project} {interaction.user.mention} \n終了時刻 {formatDate(log["end_time"])}, 今回の作業時間 {log["work_time"]}, 合計作業時間 {log["total_time"]}')
     else:
-        await interaction.followup.send(f'stop {project}:{log["description"]} {interaction.user.mention} \n終了時刻 {formatDate(log["end_time"])}, 今回の作業時間 {log["work_time"]}, 合計作業時間 {log["total_time"]}')
+        await interaction.response.send_message(f'stop {project}:{log["description"]} {interaction.user.mention} \n終了時刻 {formatDate(log["end_time"])}, 今回の作業時間 {log["work_time"]}, 合計作業時間 {log["total_time"]}')
 
 
 @client.tree.command()
@@ -82,16 +81,15 @@ async def projects(interaction: Interaction):
     projects = None
 
     try:
-        await interaction.response.defer()
         projects = getUserProjectsText(interaction.user)
     except ApiError:
         await interaction.response.send_message(f'projects  \n保存処理の最中にエラーが発生しました')
         return
 
     if len(projects) == 0:
-        await interaction.followup.send(f'projects {interaction.user.mention} \nプロジェクトは作成されていません')
+        await interaction.response.send_message(f'projects {interaction.user.mention} \nプロジェクトは作成されていません')
         return
-    await interaction.followup.send(f'project {interaction.user.mention} \n{projects}')
+    await interaction.response.send_message(f'project {interaction.user.mention} \n{projects}')
 
 
 @client.tree.command(name="help")
@@ -128,12 +126,11 @@ async def help(interaction: Interaction, commands: Choice[str] = None):
 @client.tree.command()
 async def download_file(interaction: Interaction):
     try:
-        await interaction.response.defer()
         filepath = makeLogFile(interaction.user)
     except:
-        await interaction.followup.send("エラーが発生しました。管理者に問い合わせて下さい。")
+        await interaction.response.send_message("エラーが発生しました。管理者に問い合わせて下さい。")
         return
 
-    await interaction.followup.send(file=File(filepath))
+    await interaction.response.send_message(file=File(filepath))
 
 client.run(os.getenv("TOKEN"))
