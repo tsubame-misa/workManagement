@@ -1,5 +1,5 @@
 from error import NoStartError, WorkingError, NoFinishedError
-from common import elapsed_time_str, getDate
+from common import elapsed_time_str, getDate, getWorkingTime
 from api import getUserProjects, updateWork, insertWork, insertProject, getUserWorkingWork, updateProject, getUserProjectWorks
 
 
@@ -68,17 +68,16 @@ def stopWork(user, project_name):
         work = work[0]
 
     end_time = getDate()
-    start_time = work["start_time"]
-    work_time = end_time-start_time
+    work_time = getWorkingTime(work["start_time"], end_time)
 
-    project["total_seconds"] += int(work_time.total_seconds())
+    project["total_seconds"] += work_time
     work["end_time"] = str(end_time)
 
     updateProject(project["id"], project["total_seconds"], False)
 
     updateWork(work["id"], work["end_time"])
 
-    return {"end_time": end_time, "work_time":  elapsed_time_str(work_time.total_seconds()), "total_time": elapsed_time_str(project["total_seconds"]), "description": work["description"]}
+    return {"end_time": end_time, "work_time":  elapsed_time_str(work_time), "total_time": elapsed_time_str(project["total_seconds"]), "description": work["description"]}
 
 
 def getUserProjectsText(user):
@@ -117,25 +116,16 @@ def getUserProjectDetailText(user, project_name):
     return joined_text
 
 
-def getWorkingTime(start, end):
-    if end is None:
-        return 0
-    time = end-start
-    return int(time.total_seconds())
-
-
 def getUserProjectDetail(project_id):
     works = getUserProjectWorks(project_id)
     description_dict = {"詳細なし": 0}
     for work in works:
+        time = getWorkingTime(work["start_time"], work["end_time"])
         if work["description"] is None:
-            description_dict["詳細なし"] += getWorkingTime(
-                work["start_time"], work["end_time"])
+            description_dict["詳細なし"] += time
         elif work["description"] in description_dict:
-            description_dict[work["description"]
-                             ] += getWorkingTime(work["start_time"], work["end_time"])
+            description_dict[work["description"]] += time
         else:
-            description_dict[work["description"]] = getWorkingTime(
-                work["start_time"], work["end_time"])
+            description_dict[work["description"]] = time
 
     return description_dict
