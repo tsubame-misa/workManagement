@@ -2,7 +2,6 @@ import os
 from discord import app_commands, Intents, Client, Interaction, File, Embed
 from dotenv import load_dotenv
 from discord.app_commands import CommandTree, Choice
-from discord.ui import Select, View
 from work import startWork, stopWork, getUserProjectsText
 from error import NoStartError, WorkingError, ApiError, NoFinishedError
 from help import getCommandDetail
@@ -133,6 +132,7 @@ async def download_file(interaction: Interaction):
         filepath = makeLogFile(interaction.user)
     except:
         await interaction.followup.send("エラーが発生しました。管理者に問い合わせて下さい。")
+        return
 
     await interaction.followup.send(file=File(filepath))
 
