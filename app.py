@@ -2,12 +2,12 @@ import os
 from discord import app_commands, Intents, Client, Interaction, File, Embed
 from dotenv import load_dotenv
 from discord.app_commands import CommandTree, Choice
-from work import startWork, stopWork, getUserProjectsText
+from work import startWork, stopWork, getUserProjectsText, getUserProjectDetail, getUserProjectDetailText
 from error import NoStartError, WorkingError, ApiError, NoFinishedError
 from help import getCommandDetail
 from common import formatDate
 from log import makeLogFile
-from api import getUserWorkingProjects, getUserNotWorkingProjects
+from api import getUserWorkingProjects, getUserNotWorkingProjects, getUserProjects
 load_dotenv()
 
 
@@ -94,6 +94,21 @@ async def projects(interaction: Interaction):
     await interaction.response.send_message(f'project {interaction.user.mention} \n{projects}')
 
 
+@client.tree.command()
+async def project_detail(interaction: Interaction, project_name: str):
+    projects = None
+    try:
+        projects = getUserProjectDetailText(interaction.user, project_name)
+    except ApiError:
+        await interaction.response.send_message(f'projects  \n保存処理の最中にエラーが発生しました')
+        return
+
+    if projects is None:
+        await interaction.response.send_message(f'projects {interaction.user.mention} \nプロジェクトは作成されていません')
+        return
+    await interaction.response.send_message(f'project {interaction.user.mention} \n{projects}')
+
+
 @client.tree.command(name="help")
 @app_commands.describe(commands="コマンド名(任意)")
 @app_commands.choices(commands=[
@@ -149,7 +164,7 @@ async def start_project_autoconplete(
     ]
 
 
-# 終了できるプロジェクトの自動入力
+# 終了できるプロジェクトの自動入力(TODO:選択肢以外の選択拒否)
 @stop.autocomplete('project')
 async def stop_project_autoconplete(
     interaction: Interaction,
@@ -160,5 +175,23 @@ async def stop_project_autoconplete(
     return [
         Choice(name=project, value=project) for project in user_projects_name if current.lower() in project.lower()
     ]
+
+
+# 全プロジェクトの自動入力(TODO:選択肢以外の選択拒否)
+@project_detail.autocomplete('project_name')
+async def project_detail_autoconplete(
+    interaction: Interaction,
+    current: str,
+) -> list[Choice[str]]:
+    user_projects = getUserProjects(interaction.user)
+    user_projects_name = [p["name"]for p in user_projects]
+    return [
+        Choice(name=project, value=project) for project in user_projects_name if current.lower() in project.lower()
+    ]
+
+
+@client.tree.command()
+async def hello(interaction: Interaction):
+    await interaction.response.send_message(f'Hello, {interaction.user.mention}')
 
 client.run(os.getenv("TOKEN"))

@@ -1,6 +1,6 @@
 from error import NoStartError, WorkingError, NoFinishedError
 from common import elapsed_time_str, getDate
-from api import getUserProjects, updateWork, insertWork, insertProject, getUserWorkingWork, updateProject
+from api import getUserProjects, updateWork, insertWork, insertProject, getUserWorkingWork, updateProject, getUserProjectWorks
 
 
 def getNames(user_projects):
@@ -92,3 +92,50 @@ def getUserProjectsText(user):
 
     projects_text = '\n'.join(projects)
     return projects_text
+
+
+def getUserProjectDetailText(user, project_name):
+    detail_text = []
+
+    project = getUserProject(user, project_name)
+
+    if project is None:
+        return None
+
+    text = f'【{project["name"]}】'
+    detail_text.append(text)
+
+    project_detail_list = getUserProjectDetail(project["id"])
+    for k, v in project_detail_list.items():
+        text = f' {k} : {elapsed_time_str(v)}'
+        detail_text.append(text)
+
+    text = f'合計作業時間 : {elapsed_time_str(project["total_seconds"])}'
+    detail_text.append(text)
+
+    joined_text = '\n'.join(detail_text)
+    return joined_text
+
+
+def getWorkingTime(start, end):
+    if end is None:
+        return 0
+    time = end-start
+    return int(time.total_seconds())
+
+
+def getUserProjectDetail(project_id):
+    works = getUserProjectWorks(project_id)
+    description_dict = {"詳細なし": 0}
+    for work in works:
+        if work["description"] is None:
+            description_dict["詳細なし"] += getWorkingTime(
+                work["start_time"], work["end_time"])
+        elif work["description"] in description_dict:
+            description_dict[work["description"]
+                             ] += getWorkingTime(work["start_time"], work["end_time"])
+        else:
+            description_dict[work["description"]] = getWorkingTime(
+                work["start_time"], work["end_time"])
+
+    return description_dict
