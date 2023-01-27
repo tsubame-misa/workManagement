@@ -13,3 +13,11 @@ class WorkingError(Exception):
 
 class NoFinishedError(Exception):
     pass
+
+
+class NoProjectError(Exception):
+    pass
+
+
+class AddedError(Exception):
+    pass

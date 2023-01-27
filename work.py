@@ -1,6 +1,6 @@
-from error import NoStartError, WorkingError, NoFinishedError
+from error import NoStartError, WorkingError, NoFinishedError, NoProjectError, AddedError
 from common import elapsed_time_str, getDate, getWorkingTime
-from api import getUserProjects, updateWork, insertWork, insertProject, getUserWorkingWork, updateProject, getUserProjectWorks
+from api import getUserProjects, updateWork, insertWork, insertProject, getUserWorkingWork, updateProject, getUserProjectWorks, addRoll, getRoll
 
 
 def getNames(user_projects):
@@ -129,3 +129,16 @@ def getUserProjectDetail(project_id):
             description_dict[work["description"]] = time
 
     return description_dict
+
+
+def addViewer(user_id, viewer_id, project_name):
+    project = getUserProject(user_id, project_name)
+
+    if project is None:
+        raise NoProjectError
+
+    roll = getRoll(viewer_id, project["id"])
+    if roll is None:
+        addRoll(viewer_id, project["id"])
+    else:
+        raise AddedError

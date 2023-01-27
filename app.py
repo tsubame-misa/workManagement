@@ -1,9 +1,9 @@
 import os
-from discord import app_commands, Intents, Client, Interaction, File, Embed
+from discord import app_commands, Intents, Client, Interaction, File, Embed, User
 from dotenv import load_dotenv
 from discord.app_commands import CommandTree, Choice
-from work import startWork, stopWork, getUserProjectsText, getUserProjectDetail, getUserProjectDetailText
-from error import NoStartError, WorkingError, ApiError, NoFinishedError
+from work import startWork, stopWork, getUserProjectsText, getUserProjectDetail, getUserProjectDetailText, addViewer
+from error import NoStartError, WorkingError, ApiError, NoFinishedError, NoProjectError, AddedError
 from help import getCommandDetail
 from common import formatDate
 from log import makeLogFile
@@ -40,19 +40,19 @@ async def start(
         time = startWork(interaction.user, project, description)
         time = formatDate(time)
     except WorkingError:
-        await interaction.followup.send(f'start {project} \nこのプロジェクトは作業中です。')
+        await interaction.followup.send(f'{project} \nこのプロジェクトは作業中です。')
         return
     except ApiError:
-        await interaction.followup.send(f'start {project} \n保存処理の最中にエラーが発生しました。管理者に問い合わせて下さい。')
+        await interaction.followup.send(f'{project} \n保存処理の最中にエラーが発生しました。管理者に問い合わせて下さい。')
         return
     except NoFinishedError:
-        await interaction.followup.send(f'start {project} \nこのプロジェクトには終了されていない作業があります。管理者に問い合わせて下さい。')
+        await interaction.followup.send(f'{project} \nこのプロジェクトには終了されていない作業があります。管理者に問い合わせて下さい。')
         return
 
     if description is None:
-        await interaction.followup.send(f'start {project} {interaction.user.mention} \n開始時刻 {time}')
+        await interaction.followup.send(f'{project} {interaction.user.mention} \n開始時刻 {time}')
     else:
-        await interaction.followup.send(f'start {project}:{description} {interaction.user.mention} \n開始時刻 {time}')
+        await interaction.followup.send(f'{project}:{description} {interaction.user.mention} \n開始時刻 {time}')
 
 
 @client.tree.command()
@@ -63,19 +63,19 @@ async def stop(interaction: Interaction, project: str):
         await interaction.response.defer()
         log = stopWork(interaction.user, project)
     except NoStartError:
-        await interaction.followup.send(f'stop {project} {interaction.user.mention} \n作業が開始されていません。')
+        await interaction.followup.send(f'{project} {interaction.user.mention} \n作業が開始されていません。')
         return
     except ApiError:
-        await interaction.followup.send(f'stop {project} \n保存処理の最中にエラーが発生しました。管理者に問い合わせて下さい。')
+        await interaction.followup.send(f'{project} \n保存処理の最中にエラーが発生しました。管理者に問い合わせて下さい。')
         return
     except NoFinishedError:
-        await interaction.followup.send(f'stop {project} \nこのプロジェクトには終了されていない作業があります。管理者に問い合わせて下さい。')
+        await interaction.followup.send(f'{project} \nこのプロジェクトには終了されていない作業があります。管理者に問い合わせて下さい。')
         return
 
     if log["description"] is None:
-        await interaction.followup.send(f'stop {project} {interaction.user.mention} \n終了時刻 {formatDate(log["end_time"])}, 今回の作業時間 {log["work_time"]}, 合計作業時間 {log["total_time"]}')
+        await interaction.followup.send(f'{project} {interaction.user.mention} \n終了時刻 {formatDate(log["end_time"])}, 今回の作業時間 {log["work_time"]}, 合計作業時間 {log["total_time"]}')
     else:
-        await interaction.followup.send(f'stop {project}:{log["description"]} {interaction.user.mention} \n終了時刻 {formatDate(log["end_time"])}, 今回の作業時間 {log["work_time"]}, 合計作業時間 {log["total_time"]}')
+        await interaction.followup.send(f'{project}:{log["description"]} {interaction.user.mention} \n終了時刻 {formatDate(log["end_time"])}, 今回の作業時間 {log["work_time"]}, 合計作業時間 {log["total_time"]}')
 
 
 @client.tree.command()
@@ -85,13 +85,13 @@ async def projects(interaction: Interaction):
     try:
         projects = getUserProjectsText(interaction.user)
     except ApiError:
-        await interaction.response.send_message(f'projects  \n保存処理の最中にエラーが発生しました')
+        await interaction.response.send_message(f'保存処理の最中にエラーが発生しました')
         return
 
     if len(projects) == 0:
-        await interaction.response.send_message(f'projects {interaction.user.mention} \nプロジェクトは作成されていません')
+        await interaction.response.send_message(f'{interaction.user.mention} \nプロジェクトは作成されていません')
         return
-    await interaction.response.send_message(f'project {interaction.user.mention} \n{projects}')
+    await interaction.response.send_message(f'{interaction.user.mention} \n{projects}')
 
 
 @client.tree.command()
@@ -100,13 +100,13 @@ async def project_detail(interaction: Interaction, project_name: str):
     try:
         projects = getUserProjectDetailText(interaction.user, project_name)
     except ApiError:
-        await interaction.response.send_message(f'projects  \n保存処理の最中にエラーが発生しました')
+        await interaction.response.send_message(f'保存処理の最中にエラーが発生しました')
         return
 
     if projects is None:
-        await interaction.response.send_message(f'projects {interaction.user.mention} \nプロジェクトは作成されていません')
+        await interaction.response.send_message(f'{interaction.user.mention} \nプロジェクトは作成されていません')
         return
-    await interaction.response.send_message(f'project {interaction.user.mention} \n{projects}')
+    await interaction.response.send_message(f'{interaction.user.mention} \n{projects}')
 
 
 @client.tree.command(name="help")
@@ -150,6 +150,26 @@ async def download_file(interaction: Interaction):
 
     await interaction.response.send_message(file=File(filepath))
 
+
+@client.tree.command()
+async def viewer(interaction: Interaction, viewer: User, project_name: str):
+    if interaction.user == viewer:
+        await interaction.response.send_message(f'{interaction.user.mention}, 自分に権限を与える必要はありません。')
+        return
+
+    try:
+        addViewer(interaction.user, viewer, project_name)
+    except NoProjectError:
+        await interaction.response.send_message(f'{interaction.user.mention}, {viewer.mention} のプロジェクトに {project_name} はありません。')
+    except AddedError:
+        await interaction.response.send_message(f'{interaction.user.mention}, {viewer.mention} の {project_name} の閲覧権限は既に持っています。')
+    await interaction.response.send_message(f'{interaction.user.mention}, {viewer.mention}に {project_name} の閲覧権限を与えました。')
+
+
+# @client.tree.command()
+# async def others_project(interaction: Interaction):
+#     try:
+#         project = getOthersProject(interaction)
 
 # 開始できるプロジェクトの自動入力
 @start.autocomplete('project')
