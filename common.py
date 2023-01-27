@@ -29,3 +29,10 @@ def getDate():
 
 def formatDate(date):
     return date.strftime('%Y/%m/%d %H:%M:%S')
+
+
+def getWorkingTime(start, end):
+    if end is None:
+        return 0
+    time = end-start
+    return int(time.total_seconds())
