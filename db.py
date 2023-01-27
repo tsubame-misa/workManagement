@@ -1,15 +1,17 @@
 import os
 import sqlalchemy
 from sqlalchemy.orm import sessionmaker
+from dotenv import load_dotenv
+load_dotenv()
 
 
 def create_engine():
     drivername = 'postgresql+pg8000'
-    db_host = os.environ.get('PGHOST')
-    db_port = os.environ.get('PGPORT')
-    db_name = os.environ.get('PGDATABASE')
-    db_user = os.environ.get('PGUSER')
-    db_pass = os.environ.get('PGPASSWORD')
+    db_host = os.getenv('PGHOST')
+    db_port = os.getenv('PGPORT')
+    db_name = os.getenv('PGDATABASE')
+    db_user = os.getenv('PGUSER')
+    db_pass = os.getenv('PGPASSWORD')
     target = os.environ.get('TARGET', 'development')
 
     if target == 'production':
