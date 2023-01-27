@@ -1,6 +1,6 @@
 from error import NoStartError, WorkingError, NoFinishedError
 from common import elapsed_time_str, getDate
-from api import getUserProjects, updateWork, insertWork, insertProject, getUserWorkingProject, updateProject
+from api import getUserProjects, updateWork, insertWork, insertProject, getUserWorkingWork, updateProject
 
 
 def getNames(user_projects):
@@ -45,12 +45,10 @@ def startWork(user, project_name, description):
         updateProject(project["id"], project["total_seconds"], True)
 
     # 正常に動いていたらいらないはず
-    work = getUserWorkingProject(project["id"])
+    work = getUserWorkingWork(project["id"])
     if not work is None and len(work) > 1:
         raise NoFinishedError
 
-    # work_obg = {"project_id": project["id"], "start_time": str(
-    #     my_start_time), "description": description}
     work_obg = {"project_id": project["id"],
                 "start_time": my_start_time, "description": description}
     insertWork(work_obg)
@@ -63,7 +61,7 @@ def stopWork(user, project_name):
     if project is None or project["working"] is False:
         raise NoStartError
 
-    work = getUserWorkingProject(project["id"])
+    work = getUserWorkingWork(project["id"])
     if len(work) > 1:
         raise NoFinishedError
     else:
