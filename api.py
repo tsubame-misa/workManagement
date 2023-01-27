@@ -12,8 +12,28 @@ def getUserProjects(user_id):
     return works
 
 
+# 作業をしていないのプロジェクトを取得
+def getUserNotWorkingProjects(user_id):
+    session = create_session()
+    works = session.query(Projects).filter_by(
+        user_id=str(user_id), working=False).all()
+    works = [f.to_json() for f in works]
+    session.close()
+    return works
+
+
+# 作業中のプロジェクトを取得
+def getUserWorkingProjects(user_id):
+    session = create_session()
+    works = session.query(Projects).filter_by(
+        user_id=str(user_id), working=True).all()
+    works = [f.to_json() for f in works]
+    session.close()
+    return works
+
+
 # プロジェクトで作業中のワークを取得
-def getUserWorkingProject(project_id):
+def getUserWorkingWork(project_id):
     session = create_session()
     works = session.query(Works).filter_by(
         project_id=project_id, end_time=None).all()
