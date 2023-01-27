@@ -1,117 +1,106 @@
-import requests
-import os
-import json
-from error import ApiError
+from models import Projects, Works
+from db import create_session
+from error import NoStartError
 
 
-def getUserProjects(user):
-    url = "https://tsubame.hasura.app/api/rest/work_management/user/projects"
-    headers = {
-        "Content-Type": "application/json",
-        "x-hasura-admin-secret": os.getenv('HASURA_ADMIN_SECRET'),
-    }
-    data = json.dumps({"user_id": str(user)})
-    res = requests.post(url, headers=headers, data=data)
-    data = res.json()
-
-    if "error" in data:
-        print(data)
-        raise ApiError
-
-    return data["projects"]
+# ユーザーの持つプロジェクトを取得
+def getUserProjects(user_id):
+    session = create_session()
+    works = session.query(Projects).filter_by(user_id=str(user_id)).all()
+    works = [f.to_json() for f in works]
+    session.close()
+    return works
 
 
+# プロジェクトで作業中のワークを取得
 def getUserWorkingProject(project_id):
-    url = "https://tsubame.hasura.app/api/rest/work_management/user/working/project"
-    headers = {
-        "Content-Type": "application/json",
-        "x-hasura-admin-secret": os.getenv('HASURA_ADMIN_SECRET'),
-    }
-    data = json.dumps({"project_id": project_id})
-    res = requests.post(url, headers=headers, data=data)
-    data = res.json()
+    session = create_session()
+    works = session.query(Works).filter_by(
+        project_id=project_id, end_time=None).all()
+    works = [f.to_json() for f in works]
+    session.close()
 
-    if "error" in data:
-        raise ApiError
-
-    if len(data["works"]) == 0:
+    if len(works) == 0:
         return None
 
-    return data["works"]
+    return works
 
 
-def insertProject(data):
-    url = "https://tsubame.hasura.app/api/rest/work_management/insert/project"
-    headers = {
-        "Content-Type": "application/json",
-        "x-hasura-admin-secret": os.getenv('HASURA_ADMIN_SECRET'),
-    }
-    data = json.dumps({"object": data})
-    res = requests.post(url, headers=headers, data=data)
-    data = res.json()
-    if "error" in data:
-        print(data)
-        raise ApiError
-    return data["insert_projects_one"]
-
-
-def updateProject(id, total_seconds, working):
-    url = "https://tsubame.hasura.app/api/rest/work_management/update/project"
-    headers = {
-        "Content-Type": "application/json",
-        "x-hasura-admin-secret": os.getenv('HASURA_ADMIN_SECRET'),
-    }
-    data = json.dumps(
-        {"id": id, "total_seconds": total_seconds, "working": working})
-    res = requests.put(url, headers=headers, data=data)
-    data = res.json()
-    if "error" in data:
-        print(data)
-        raise ApiError
-    return data["update_projects_by_pk"]
-
-
-def insertWork(data):
-    url = "https://tsubame.hasura.app/api/rest/work_management/insert/work"
-    headers = {
-        "Content-Type": "application/json",
-        "x-hasura-admin-secret": os.getenv('HASURA_ADMIN_SECRET'),
-    }
-    data = json.dumps({"object": data})
-    res = requests.post(url, headers=headers, data=data)
-    data = res.json()
-    if "error" in data:
-        print(data)
-        raise ApiError
-    return data["insert_works_one"]
-
-
-def updateWork(work_id, end_time):
-    url = "https://tsubame.hasura.app/api/rest/update/project"
-    headers = {
-        "Content-Type": "application/json",
-        "x-hasura-admin-secret": os.getenv('HASURA_ADMIN_SECRET'),
-    }
-    data = json.dumps({"id": work_id, "end_time": end_time})
-    res = requests.put(url, headers=headers, data=data)
-    data = res.json()
-    if "error" in data:
-        raise ApiError
-    return data["update_works_by_pk"]
-
-
+# プロジェクトのワークを取得
 def getUserProjectWorks(project_id):
-    url = "https://tsubame.hasura.app/api/rest/work_management/users/projects/work"
-    headers = {
-        "Content-Type": "application/json",
-        "x-hasura-admin-secret": os.getenv('HASURA_ADMIN_SECRET'),
-    }
-    data = json.dumps({"project_id": project_id})
-    res = requests.post(url, headers=headers, data=data)
-    data = res.json()
+    session = create_session()
+    works = session.query(Works).filter_by(
+        project_id=project_id).all()
+    works = [f.to_json() for f in works]
+    session.close()
 
-    if "error" in data:
-        print(data)
-        raise ApiError
+    return works
 
-    return data["works"]
+
+# 新しいプロジェクトの追加
+def insertProject(obj):
+    session = create_session()
+    project = Projects(
+        user_id=obj["user_id"],
+        name=obj["name"],
+        working=obj["working"]
+    )
+    session.add(project)
+    session.commit()
+    project = project.to_json()
+    session.close()
+
+    return project
+
+
+# プロジェクトのアップデート（合計時間、作業中可否）
+def updateProject(id, total_seconds, working):
+    session = create_session()
+    project_info = session.query(Projects).filter_by(
+        id=id).first()
+
+    if project_info is None:
+        raise NoStartError
+
+    project_info.total_seconds = total_seconds
+    project_info.working = working
+    session.commit()
+
+    project_info = project_info.to_json()
+    session.close()
+
+    return project_info
+
+
+# 新しいワークの追加
+def insertWork(obj):
+    session = create_session()
+    work = Works(
+        project_id=obj["project_id"],
+        start_time=obj["start_time"],
+        description=obj["description"]
+    )
+    session.add(work)
+    session.commit()
+    work = work.to_json()
+    session.close()
+
+    return work
+
+
+# ワークのアップデート（終了時刻の追加）
+def updateWork(id, end_time):
+    session = create_session()
+    work_info = session.query(Works).filter_by(
+        id=id).first()
+
+    if work_info is None:
+        raise NoStartError
+
+    work_info.end_time = end_time
+    session.commit()
+
+    work_info = work_info.to_json()
+    session.close()
+
+    return work_info

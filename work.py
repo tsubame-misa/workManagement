@@ -1,6 +1,5 @@
-import datetime
 from error import NoStartError, WorkingError, NoFinishedError
-from common import elapsed_time_str, getDate, formatDate
+from common import elapsed_time_str, getDate
 from api import getUserProjects, updateWork, insertWork, insertProject, getUserWorkingProject, updateProject
 
 
@@ -50,8 +49,10 @@ def startWork(user, project_name, description):
     if not work is None and len(work) > 1:
         raise NoFinishedError
 
-    work_obg = {"project_id": project["id"], "start_time": str(
-        my_start_time), "description": description}
+    # work_obg = {"project_id": project["id"], "start_time": str(
+    #     my_start_time), "description": description}
+    work_obg = {"project_id": project["id"],
+                "start_time": my_start_time, "description": description}
     insertWork(work_obg)
 
     return my_start_time
@@ -69,15 +70,15 @@ def stopWork(user, project_name):
         work = work[0]
 
     end_time = getDate()
-    start_time = datetime.datetime.strptime(
-        work["start_time"], '%Y-%m-%dT%H:%M:%S')
+    start_time = work["start_time"]
     work_time = end_time-start_time
 
     project["total_seconds"] += int(work_time.total_seconds())
     work["end_time"] = str(end_time)
 
     updateProject(project["id"], project["total_seconds"], False)
-    updateWork(work["id"], str(end_time))
+
+    updateWork(work["id"], work["end_time"])
 
     return {"end_time": end_time, "work_time":  elapsed_time_str(work_time.total_seconds()), "total_time": elapsed_time_str(project["total_seconds"]), "description": work["description"]}
 
