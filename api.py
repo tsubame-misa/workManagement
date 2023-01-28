@@ -1,6 +1,7 @@
-from models import Projects, Works
+from models import Projects, Works, Rolls
 from db import create_session
 from error import NoStartError
+import json
 
 
 # ユーザーの持つプロジェクトを取得
@@ -124,3 +125,44 @@ def updateWork(id, end_time):
     session.close()
 
     return work_info
+
+
+# 他人のプロジェクトに対しては権限を持てる
+def getRoll(user_id, project_id):
+    session = create_session()
+    roll = session.query(Rolls).filter_by(
+        user_id=str(user_id), project_id=project_id).first()
+    if not roll is None:
+        roll = roll.to_json()
+    session.close()
+    return roll
+
+
+def addRoll(user_id, project_id):
+    session = create_session()
+    roll = Rolls(
+        user_id=str(user_id),
+        project_id=project_id,
+        roll=4
+    )
+    session.add(roll)
+    session.commit()
+    roll = roll.to_json()
+    session.close()
+
+
+def getOthersProjectRoll(viewer_id):
+    session = create_session()
+    roll = session.query(Rolls).filter_by(
+        user_id=str(viewer_id), roll=4).all()
+    roll = [r.to_json() for r in roll]
+    session.close()
+    return roll
+
+
+def getProjectFromId(project_id):
+    session = create_session()
+    project = session.query(Projects).filter_by(id=project_id).first()
+    project = project.to_json()
+    session.close()
+    return project

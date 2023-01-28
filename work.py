@@ -1,6 +1,7 @@
-from error import NoStartError, WorkingError, NoFinishedError
+from error import NoStartError, WorkingError, NoFinishedError, NoProjectError, AddedError
 from common import elapsed_time_str, getDate, getWorkingTime
-from api import getUserProjects, updateWork, insertWork, insertProject, getUserWorkingWork, updateProject, getUserProjectWorks
+from api import getUserProjects, updateWork, insertWork, insertProject, getUserWorkingWork, updateProject, getUserProjectWorks, addRoll, getRoll, getOthersProjectRoll, getProjectFromId
+from discord import User
 
 
 def getNames(user_projects):
@@ -116,6 +117,26 @@ def getUserProjectDetailText(user, project_name):
     return joined_text
 
 
+def getProjectDetailText(project, others=False):
+    detail_text = []
+    if others:
+        text = f'【{project["user_id"]} {project["name"]}】'
+    else:
+        text = f'【{project["name"]}】'
+    detail_text.append(text)
+
+    project_detail_list = getUserProjectDetail(project["id"])
+    for k, v in project_detail_list.items():
+        text = f' {k} : {elapsed_time_str(v)}'
+        detail_text.append(text)
+
+    text = f'合計作業時間 : {elapsed_time_str(project["total_seconds"])}'
+    detail_text.append(text)
+
+    joined_text = '\n'.join(detail_text)
+    return joined_text
+
+
 def getUserProjectDetail(project_id):
     works = getUserProjectWorks(project_id)
     description_dict = {"詳細なし": 0}
@@ -129,3 +150,35 @@ def getUserProjectDetail(project_id):
             description_dict[work["description"]] = time
 
     return description_dict
+
+
+def addViewer(user_id, viewer_id, project_name):
+    project = getUserProject(user_id, project_name)
+
+    if project is None:
+        raise NoProjectError
+
+    roll = getRoll(viewer_id, project["id"])
+    if roll is None:
+        addRoll(viewer_id, project["id"])
+    else:
+        raise AddedError
+
+
+def getOthersProject(viewer_id):
+    roll = getOthersProjectRoll(viewer_id)
+    project_ids = [r["project_id"] for r in roll]
+
+    print(project_ids)
+
+    if len(project_ids) == 0:
+        return None
+
+    project_text = []
+    for id in project_ids:
+        p = getProjectFromId(id)
+        text = getProjectDetailText(p, True)
+        project_text.append(text)
+
+    joined_text = '\n\n'.join(project_text)
+    return joined_text
