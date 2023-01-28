@@ -2,7 +2,7 @@ import os
 from discord import app_commands, Intents, Client, Interaction, File, Embed, User
 from dotenv import load_dotenv
 from discord.app_commands import CommandTree, Choice
-from work import startWork, stopWork, getUserProjectsText, getUserProjectDetail, getUserProjectDetailText, addViewer
+from work import startWork, stopWork, getUserProjectsText, getUserProjectDetail, getUserProjectDetailText, addViewer, getOthersProject
 from error import NoStartError, WorkingError, ApiError, NoFinishedError, NoProjectError, AddedError
 from help import getCommandDetail
 from common import formatDate
@@ -166,10 +166,14 @@ async def viewer(interaction: Interaction, viewer: User, project_name: str):
     await interaction.response.send_message(f'{interaction.user.mention}, {viewer.mention}に {project_name} の閲覧権限を与えました。')
 
 
-# @client.tree.command()
-# async def others_project(interaction: Interaction):
-#     try:
-#         project = getOthersProject(interaction)
+@client.tree.command()
+async def others_project(interaction: Interaction):
+    project = getOthersProject(interaction.user)
+    if project is None:
+        await interaction.response.send_message(f'閲覧できる他者のプロジェクトはありません。')
+        return
+    await interaction.response.send_message(f'{interaction.user.mention} \n{project}')
+
 
 # 開始できるプロジェクトの自動入力
 @start.autocomplete('project')
@@ -208,10 +212,5 @@ async def project_detail_autoconplete(
     return [
         Choice(name=project, value=project) for project in user_projects_name if current.lower() in project.lower()
     ]
-
-
-@client.tree.command()
-async def hello(interaction: Interaction):
-    await interaction.response.send_message(f'Hello, {interaction.user.mention}')
 
 client.run(os.getenv("TOKEN"))

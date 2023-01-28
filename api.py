@@ -149,3 +149,20 @@ def addRoll(user_id, project_id):
     session.commit()
     roll = roll.to_json()
     session.close()
+
+
+def getOthersProjectRoll(viewer_id):
+    session = create_session()
+    roll = session.query(Rolls).filter_by(
+        user_id=str(viewer_id), roll=4).all()
+    roll = [r.to_json() for r in roll]
+    session.close()
+    return roll
+
+
+def getProjectFromId(project_id):
+    session = create_session()
+    project = session.query(Projects).filter_by(id=project_id).first()
+    project = project.to_json()
+    session.close()
+    return project
