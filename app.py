@@ -73,9 +73,9 @@ async def stop(interaction: Interaction, project: str):
         return
 
     if log["description"] is None:
-        await interaction.followup.send(f'{project} {interaction.user.mention} \n終了時刻 {formatDate(log["end_time"])}, 今回の作業時間 {log["work_time"]}, 合計作業時間 {log["total_time"]}')
+        await interaction.followup.send(f'{project} {interaction.user.mention} \n終了時刻 {formatDate(log["end_time"])}\n 今回の作業時間 {log["work_time"]}\n 合計作業時間 {log["total_time"]}')
     else:
-        await interaction.followup.send(f'{project}:{log["description"]} {interaction.user.mention} \n終了時刻 {formatDate(log["end_time"])}, 今回の作業時間 {log["work_time"]}, 合計作業時間 {log["total_time"]}')
+        await interaction.followup.send(f'{project}:{log["description"]} {interaction.user.mention} \n終了時刻 {formatDate(log["end_time"])}\n 今回の作業時間 {log["work_time"]}\n 合計作業時間 {log["total_time"]}')
 
 
 @client.tree.command()
@@ -115,6 +115,9 @@ async def project_detail(interaction: Interaction, project_name: str):
     Choice(name="start", value="start"),
     Choice(name="stop", value="stop"),
     Choice(name="projects", value="projects"),
+    Choice(name="project_detail", value="project_detail"),
+    Choice(name="viewer", value="viewer"),
+    Choice(name="others_projects", value="start"),
     Choice(name="download_file", value="download_file"),
 ])
 async def help(interaction: Interaction, commands: Choice[str] = None):
@@ -124,7 +127,13 @@ async def help(interaction: Interaction, commands: Choice[str] = None):
         embed.add_field(name="`/start <project_name> <description>` ",
                         value="作業の開始")
         embed.add_field(name="`/stop <project_name>`", value="作業の終了\n")
-        embed.add_field(name="`/projects`", value="プロジェクト作業時間の一覧表示\n")
+        embed.add_field(name="`/projects`", value="全てのプロジェクト作業時間の表示\n")
+        embed.add_field(name="`/project_detail <project_name>`",
+                        value="任意のプロジェクトの作業時間の詳細表示")
+        embed.add_field(name="`/viewer <viewer> <project_name>`",
+                        value="viewerに対して自分の任意のプロジェクトの閲覧権限を与える")
+        embed.add_field(name="`/others_projects`",
+                        value="閲覧権限を持っている他者のプロジェクトの作業時間を表示")
         embed.add_field(name="`/download_file`",
                         value="プロジェクトの詳細データ(json)のダウンロード")
         await interaction.response.send_message(embed=embed)
@@ -167,7 +176,7 @@ async def viewer(interaction: Interaction, viewer: User, project_name: str):
 
 
 @client.tree.command()
-async def others_project(interaction: Interaction):
+async def others_projects(interaction: Interaction):
     project = getOthersProject(interaction.user)
     if project is None:
         await interaction.response.send_message(f'閲覧できる他者のプロジェクトはありません。')
